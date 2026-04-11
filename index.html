@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sorting Algorithm Visualizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { sans: ['Kanit', 'sans-serif'], mono: ['Consolas', 'Courier New', 'monospace'] } } }
+    }
+  </script>
+
+  <style>
+    /* CSS สำหรับแอนิเมชันกล่องและต้นไม้ (คงไว้เหมือนเดิม) */
+    .array-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; padding: 40px 10px 20px; min-height: 200px; }
+    .array-box { width: 56px; height: 56px; border: 2px solid #93c5fd; border-radius: 12px; background: white; color: #1d4ed8; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 700; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s, border-color 0.2s; }
+    .array-idx { position: absolute; top: -24px; font-size: 0.75rem; color: #94a3b8; font-family: monospace; font-weight: normal; }
+
+    .heap-wrapper { position: relative; width: 100%; min-height: 380px; margin-top: 20px; }
+    .heap-svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+    .heap-node { position: absolute; transform: translate(-50%, -50%); width: 50px; height: 50px; border-radius: 50%; border: 2px solid #60a5fa; background: white; color: #1d4ed8; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; z-index: 2; transition: all 0.3s ease; }
+
+    .mini-heap-wrapper { position: relative; width: 100%; min-height: 140px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; margin-top: 10px; overflow: hidden; }
+    .mini-heap-node { position: absolute; transform: translate(-50%, -50%); width: 28px; height: 28px; border-radius: 50%; border: 2px solid #93c5fd; background: white; color: #1d4ed8; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; z-index: 2; transition: all 0.2s ease; }
+    
+    .state-compare { background: #fef3c7 !important; border-color: #f59e0b !important; color: #b45309 !important; transform: scale(1.15); z-index: 10 !important; box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.4); }
+    .state-swap { background: #fee2e2 !important; border-color: #ef4444 !important; color: #b91c1c !important; transform: scale(1.25); z-index: 20 !important; box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.5); }
+    .state-pivot { background: #ede9fe !important; border-color: #8b5cf6 !important; color: #6d28d9 !important; transform: scale(1.15); z-index: 15 !important; box-shadow: 0 10px 20px -5px rgba(139, 92, 246, 0.4);}
+    .state-sorted { background: #d1fae5 !important; border-color: #10b981 !important; color: #047857 !important; box-shadow: 0 4px 10px -2px rgba(16, 185, 129, 0.2);}
+    .state-gap { border-style: dashed !important; border-color: #cbd5e1 !important; background: transparent !important; color: transparent !important; box-shadow: none !important; }
+    
+    .mini-heap-node.state-compare, .mini-heap-node.state-swap, .mini-heap-node.state-pivot { transform: translate(-50%, -50%) scale(1.25); }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 min-h-screen text-slate-800 p-4 md:p-6 lg:p-8 selection:bg-blue-200 selection:text-blue-900">
+  <div class="max-w-[1400px] mx-auto space-y-8">
+    
+    <header class="bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black text-white rounded-[2rem] shadow-2xl shadow-blue-900/10 p-8 lg:p-10 relative overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-10 items-center border border-slate-700/50">
+      
+      <div class="absolute -right-32 -top-32 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px] pointer-events-none"></div>
+      <div class="absolute -left-32 -bottom-32 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+      <div class="lg:col-span-7 relative z-10">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20 text-blue-300 font-semibold tracking-widest uppercase text-[10px] mb-4">
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+          Algorithm Explorer
+        </div>
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-5 bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-blue-200">
+          Sorting Visualizer
+        </h1>
+        <p class="text-slate-300 text-lg mb-8 max-w-xl font-light leading-relaxed">
+          เรียนรู้ ทดลอง และเปรียบเทียบวิธีการเรียงลำดับข้อมูลทั้ง 6 แบบ พร้อมแสดงขั้นตอนการทำงานแบบ <span class="text-white font-medium border-b border-blue-500/50">Real-time Animation</span>
+        </p>
+        <div class="flex flex-wrap gap-3">
+          <span class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-medium backdrop-blur-sm shadow-inner">6 อัลกอริทึม</span>
+          <span class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-medium backdrop-blur-sm shadow-inner">ดูทีละ Step</span>
+          <span class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-medium backdrop-blur-sm shadow-inner">แสดงผลแบบสด</span>
+        </div>
+      </div>
+
+      <div class="lg:col-span-5 grid grid-cols-2 md:grid-cols-3 gap-3 relative z-10">
+        <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-colors duration-300">
+          <span class="text-slate-400 text-xs block mb-1 uppercase tracking-wider font-semibold">อัลกอริทึม</span>
+          <strong id="heroAlgorithm" class="text-lg text-white">Selection Sort</strong>
+        </div>
+        <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-colors duration-300">
+          <span class="text-slate-400 text-xs block mb-1 uppercase tracking-wider font-semibold">สถานะ</span>
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
+            <strong id="runStatus" class="text-lg text-emerald-400">พร้อมเริ่ม</strong>
+          </div>
+        </div>
+        <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-colors duration-300">
+          <span class="text-slate-400 text-xs block mb-1 uppercase tracking-wider font-semibold">จำนวนรอบ</span>
+          <strong id="roundCount" class="text-xl text-white">0</strong>
+        </div>
+        <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-colors duration-300 relative overflow-hidden group">
+          <div class="absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+          <span class="text-slate-400 text-xs block mb-1 uppercase tracking-wider font-semibold">เปรียบเทียบ</span>
+          <strong id="comparisonCount" class="text-2xl text-amber-400">0</strong>
+        </div>
+        <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 md:col-span-2 hover:bg-white/10 transition-colors duration-300 relative overflow-hidden group">
+          <div class="absolute inset-0 bg-gradient-to-r from-transparent via-red-400/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+          <span class="text-slate-400 text-xs block mb-1 uppercase tracking-wider font-semibold">การสลับ / เขียนทับ</span>
+          <strong id="swapCount" class="text-2xl text-red-400">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <aside class="lg:col-span-4 flex flex-col gap-6">
+        
+        <section class="bg-white/70 backdrop-blur-xl border border-slate-200/80 rounded-[2rem] p-7 shadow-xl shadow-slate-200/40 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-24 h-24 bg-blue-100 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+          <div class="relative z-10">
+            <h2 class="text-xl font-bold mb-4 text-slate-800 flex items-center gap-2">
+              <span class="flex items-center justify-center w-6 h-6 rounded-md bg-blue-100 text-blue-600 text-sm">1</span>
+              กรอกข้อมูล
+            </h2>
+            <textarea id="dataInput" rows="2" class="w-full p-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all resize-none font-mono text-slate-700 shadow-inner">23, 78, 45, 8, 56, 32</textarea>
+            <p id="validationMessage" class="text-red-500 text-sm font-medium mt-2 min-h-[20px]"></p>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+              <button id="sampleButton" class="py-2.5 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 text-blue-700 font-bold rounded-xl border border-blue-200 transition-colors shadow-sm">สุ่มข้อมูลใหม่</button>
+              <button id="clearInputButton" class="py-2.5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-600 font-bold rounded-xl transition-colors shadow-sm">ล้างข้อมูล</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="bg-white/70 backdrop-blur-xl border border-slate-200/80 rounded-[2rem] p-7 shadow-xl shadow-slate-200/40">
+          <h2 class="text-xl font-bold mb-4 text-slate-800 flex items-center gap-2">
+            <span class="flex items-center justify-center w-6 h-6 rounded-md bg-indigo-100 text-indigo-600 text-sm">2</span>
+            เลือกวิธีการ Sort
+          </h2>
+          <select id="algorithmSelect" class="w-full p-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none cursor-pointer mb-6 font-semibold text-slate-700 shadow-inner appearance-none transition-all">
+            <option value="selection">Selection Sort</option>
+            <option value="insertion">Insertion Sort</option>
+            <option value="bubble">Bubble Sort</option>
+            <option value="quick">Quick Sort</option>
+            <option value="merge">Merge Sort</option>
+            <option value="heap">Heap Sort (Tree View)</option>
+          </select>
+          <label class="block text-sm font-semibold mb-3 text-slate-600">ความเร็วแอนิเมชัน</label>
+          <div class="flex items-center gap-5 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+            <input id="speedRange" type="range" min="120" max="1200" step="60" value="420" class="flex-1 accent-indigo-500 cursor-grab" />
+            <span id="speedLabel" class="bg-indigo-100 text-indigo-800 text-xs font-bold px-3 py-1.5 rounded-lg min-w-[70px] text-center shadow-sm">420 ms</span>
+          </div>
+        </section>
+
+        <section class="bg-white/70 backdrop-blur-xl border border-slate-200/80 rounded-[2rem] p-7 shadow-xl shadow-slate-200/40">
+          <h2 class="text-xl font-bold mb-5 text-slate-800 flex items-center gap-2">
+            <span class="flex items-center justify-center w-6 h-6 rounded-md bg-emerald-100 text-emerald-600 text-sm">3</span>
+            ควบคุมการทำงาน
+          </h2>
+          <div class="grid grid-cols-2 gap-3">
+            <button id="startButton" class="col-span-2 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-2xl shadow-[0_8px_20px_-6px_rgba(79,70,229,0.5)] hover:shadow-[0_12px_25px_-6px_rgba(79,70,229,0.6)] transition-all active:scale-[0.98] text-lg tracking-wide">▶ เริ่มเรียงข้อมูล</button>
+            <button id="stepButton" class="py-3 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-semibold rounded-xl border border-slate-200 transition-colors shadow-sm">ดูทีละขั้น</button>
+            <button id="autoButton" class="py-3 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-semibold rounded-xl border border-slate-200 transition-colors shadow-sm">รันอัตโนมัติ</button>
+            <button id="stopButton" class="py-3 bg-amber-50 hover:bg-amber-100 active:bg-amber-200 text-amber-700 font-semibold rounded-xl border border-amber-200 transition-colors shadow-sm">หยุดชั่วคราว</button>
+            <button id="resetButton" class="py-3 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 font-semibold rounded-xl border border-rose-200 transition-colors shadow-sm">รีเซ็ต</button>
+          </div>
+        </section>
+
+        <section class="bg-white/70 backdrop-blur-xl border border-slate-200/80 rounded-[2rem] p-7 shadow-xl shadow-slate-200/40">
+          <h2 class="text-lg font-bold mb-4 text-slate-800">อธิบายสี (Legend)</h2>
+          <div class="flex flex-col gap-2.5 text-sm font-medium text-slate-600">
+            <div class="flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-100 rounded-xl hover:bg-white transition-colors"><div class="w-4 h-4 rounded-full bg-blue-500 shadow-inner"></div> ข้อมูลปกติ</div>
+            <div class="flex items-center gap-3 p-2.5 bg-amber-50/50 border border-amber-100/50 rounded-xl hover:bg-amber-50 transition-colors"><div class="w-4 h-4 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"></div> กำลังเปรียบเทียบ</div>
+            <div class="flex items-center gap-3 p-2.5 bg-red-50/50 border border-red-100/50 rounded-xl hover:bg-red-50 transition-colors"><div class="w-4 h-4 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"></div> สลับ / เขียนทับ</div>
+            <div class="flex items-center gap-3 p-2.5 bg-purple-50/50 border border-purple-100/50 rounded-xl hover:bg-purple-50 transition-colors"><div class="w-4 h-4 rounded-full bg-purple-600 shadow-[0_0_8px_rgba(147,51,234,0.5)]"></div> Pivot / Focus</div>
+            <div class="flex items-center gap-3 p-2.5 bg-emerald-50/50 border border-emerald-100/50 rounded-xl hover:bg-emerald-50 transition-colors"><div class="w-4 h-4 rounded-full bg-emerald-500 shadow-inner"></div> เรียงเสร็จแล้ว</div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="lg:col-span-8 flex flex-col gap-8">
+        
+        <section class="bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-slate-950 text-white border border-slate-700 rounded-[2.5rem] p-8 md:p-10 shadow-2xl shadow-slate-900/40 relative overflow-hidden">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 relative z-10">
+            <div>
+              <div class="inline-flex items-center gap-2 mb-2">
+                 <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
+                 <p class="text-sky-400 font-bold text-[10px] uppercase tracking-widest">Main Visualization</p>
+              </div>
+              <h2 class="text-3xl font-bold text-white tracking-wide">Animation Board</h2>
+            </div>
+            <p id="currentStepMessage" class="bg-slate-800/80 backdrop-blur-md border border-slate-600 text-sky-100 px-5 py-3 rounded-2xl text-sm font-medium max-w-sm shadow-inner">
+              กดเริ่มเรียงข้อมูลเพื่อดูขั้นตอนการทำงาน
+            </p>
+          </div>
+          <div id="barsContainer" class="array-container bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 shadow-inner"></div>
+          
+          <div class="absolute top-0 inset-x-0 h-40 bg-sky-500/10 blur-[100px] pointer-events-none"></div>
+          <div class="absolute bottom-0 inset-x-0 h-40 bg-indigo-500/10 blur-[100px] pointer-events-none"></div>
+        </section>
+
+        <section id="heapTreeSection" class="bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-[2rem] p-8 shadow-xl shadow-slate-200/40" style="display:none;">
+          <div class="inline-flex items-center gap-2 mb-2">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            <p class="text-indigo-600 font-bold text-[10px] uppercase tracking-widest">Tree Representation</p>
+          </div>
+          <h2 class="text-2xl font-bold mb-2 text-slate-800">ภาพต้นไม้ของ Heap</h2>
+          <p id="heapTreeMessage" class="text-slate-500 text-sm mb-6 font-light">โครงสร้างเชิงตรรกะของข้อมูลในรูปแบบ Binary Tree</p>
+          <div id="heapTreeContainer" class="bg-slate-50/50 rounded-3xl border border-slate-200/60 p-4 shadow-inner"></div>
+          <div class="mt-6 p-5 bg-white border border-slate-200 rounded-2xl hidden">
+            <h3 class="font-bold mb-3 text-slate-800 text-sm uppercase tracking-wide">Sorted Tail</h3>
+            <div id="heapSortedTail" class="flex flex-wrap gap-2 text-emerald-600 font-bold"></div>
+          </div>
+        </section>
+
+        <section class="bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-[2rem] p-8 shadow-xl shadow-slate-200/40">
+          <div class="inline-flex items-center gap-2 mb-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <p class="text-emerald-600 font-bold text-[10px] uppercase tracking-widest">Data State</p>
+          </div>
+          <h2 class="text-2xl font-bold mb-6 text-slate-800">ผลลัพธ์ก่อนและหลัง</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-6 bg-gradient-to-br from-slate-50 to-white border border-slate-200/80 rounded-3xl shadow-sm">
+              <h3 class="font-bold mb-4 text-slate-700 text-sm uppercase tracking-wider flex items-center gap-2"><span class="text-blue-500">■</span> ก่อน Sort</h3>
+              <div id="beforeArray" class="flex flex-wrap gap-2 text-blue-700 font-bold"></div>
+            </div>
+            <div class="p-6 bg-gradient-to-br from-emerald-50/30 to-white border border-emerald-100 rounded-3xl shadow-sm">
+              <h3 class="font-bold mb-4 text-slate-700 text-sm uppercase tracking-wider flex items-center gap-2"><span class="text-emerald-500">■</span> หลัง Sort</h3>
+              <div id="afterArray" class="flex flex-wrap gap-2 text-emerald-600 font-bold"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-[2rem] p-8 shadow-xl shadow-slate-200/40">
+          <div class="inline-flex items-center gap-2 mb-2">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <p class="text-amber-600 font-bold text-[10px] uppercase tracking-widest">Table 1</p>
+          </div>
+          <h2 class="text-2xl font-bold mb-6 text-slate-800">สรุปผลการทำงานแต่ละรอบ (Pass)</h2>
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 shadow-inner bg-slate-50/50">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+              <thead class="bg-white border-b border-slate-200">
+                <tr>
+                  <th class="p-5 font-bold text-slate-700 w-32 uppercase tracking-wide text-xs">รอบที่</th>
+                  <th class="p-5 font-bold text-slate-700 text-center uppercase tracking-wide text-xs">สถานะข้อมูลเมื่อจบรอบ</th>
+                </tr>
+              </thead>
+              <tbody id="roundSummaryTableBody" class="divide-y divide-slate-100 text-slate-600 bg-transparent">
+                <tr><td colspan="2" class="p-8 text-center text-slate-400 font-light">กำลังรอเริ่มการทำงาน...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-[2rem] p-8 shadow-xl shadow-slate-200/40">
+          <div class="inline-flex items-center gap-2 mb-2">
+            <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+            <p class="text-rose-500 font-bold text-[10px] uppercase tracking-widest">Table 2</p>
+          </div>
+          <h2 class="text-2xl font-bold mb-2 text-slate-800">ภาพการทำงานทุก Step</h2>
+          <p id="processGalleryMessage" class="text-slate-500 text-sm mb-8 font-light">การ์ดจะแสดงสถานะข้อมูลในแต่ละขั้น (ถ้าเป็น Heap จะแสดงเป็นต้นไม้)</p>
+          <div id="processGallery" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+        </section>
+
+        <section class="bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-[2rem] p-8 shadow-xl shadow-slate-200/40">
+          <div class="inline-flex items-center gap-2 mb-2">
+            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+            <p class="text-purple-600 font-bold text-[10px] uppercase tracking-widest">Table 3</p>
+          </div>
+          <h2 class="text-2xl font-bold mb-6 text-slate-800">ขั้นตอนการทำงานแบบละเอียด (Log)</h2>
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 shadow-inner bg-slate-50/50 max-h-[450px] overflow-y-auto">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+              <thead class="bg-white/90 backdrop-blur-sm sticky top-0 z-10 border-b border-slate-200 shadow-sm">
+                <tr>
+                  <th class="p-5 font-bold text-slate-700 uppercase tracking-wide text-xs">Step</th>
+                  <th class="p-5 font-bold text-slate-700 uppercase tracking-wide text-xs">รอบ</th>
+                  <th class="p-5 font-bold text-slate-700 uppercase tracking-wide text-xs">ประเภท</th>
+                  <th class="p-5 font-bold text-slate-700 uppercase tracking-wide text-xs">คำอธิบาย</th>
+                  <th class="p-5 font-bold text-slate-700 uppercase tracking-wide text-xs">สถานะข้อมูล</th>
+                </tr>
+              </thead>
+              <tbody id="stepsTableBody" class="divide-y divide-slate-100 text-slate-600 bg-transparent"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-[2rem] p-8 shadow-xl shadow-slate-200/40">
+          <div class="inline-flex items-center gap-2 mb-2">
+            <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+            <p class="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Information</p>
+          </div>
+          <h2 id="algorithmTitle" class="text-3xl font-bold mb-8 pb-5 border-b border-slate-200 text-slate-800">Selection Sort</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <article class="space-y-3">
+              <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2"><span class="text-blue-500">●</span> หลักการทำงาน</h3>
+              <p id="algorithmPrinciple" class="text-slate-600 leading-relaxed font-light"></p>
+            </article>
+            <article class="space-y-3">
+              <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2"><span class="text-blue-500">●</span> แนวคิดโดยย่อ</h3>
+              <p id="algorithmIdea" class="text-slate-600 leading-relaxed font-light"></p>
+            </article>
+            <article class="bg-gradient-to-br from-slate-50 to-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <h3 class="font-bold text-lg text-slate-800 mb-5 border-b border-slate-200 pb-3">Big O Complexity</h3>
+              <ul class="space-y-3 text-slate-600">
+                <li class="flex justify-between items-center bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">Best Case: <strong id="bestCase" class="text-slate-900 font-mono"></strong></li>
+                <li class="flex justify-between items-center bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">Average Case: <strong id="averageCase" class="text-slate-900 font-mono"></strong></li>
+                <li class="flex justify-between items-center bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">Worst Case: <strong id="worstCase" class="text-slate-900 font-mono"></strong></li>
+                <li class="flex justify-between items-center bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">Space: <strong id="spaceCase" class="text-slate-900 font-mono"></strong></li>
+              </ul>
+            </article>
+            <article class="space-y-3">
+              <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2"><span class="text-blue-500">●</span> จุดเด่นและข้อจำกัด</h3>
+              <ul id="algorithmHighlights" class="list-disc list-inside text-slate-600 space-y-2 leading-relaxed font-light marker:text-blue-400"></ul>
+            </article>
+          </div>
+        </section>
+
+      </section>
+    </main>
+  </div>
+
+  <script src="./js/constants.js"></script>
+  <script src="./js/state.js"></script>
+  <script src="./js/dom.js"></script>
+  <script src="./js/algorithms.js"></script>
+  <script src="./js/renderers.js"></script>
+  <script src="./js/app.js"></script>
+  <script src="./script.js"></script>
+</body>
+</html>

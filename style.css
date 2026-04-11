@@ -1,0 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* สร้าง Class ชื่อ .icon-filled ขึ้นมาเอง เพื่อให้เอาไปทำให้ icon เปลี่ยนเป็นแบบ fill ได้ */
+.icon-filled {
+  font-variation-settings: 'FILL' 1;
+}
+* {
+  font-family: 'Noto Sans Thai', sans-serif;
+}
+
