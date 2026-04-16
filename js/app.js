@@ -1,3 +1,4 @@
+//Eton
 (function () {
   // ไฟล์นี้เป็นศูนย์กลางการควบคุมการทำงานของหน้าเว็บ
   // หน้าที่หลักคือเชื่อม state, algorithms, renderers และ event ของผู้ใช้เข้าด้วยกัน
@@ -168,11 +169,12 @@
     setStatus("พร้อมเริ่ม");
   }
 
+  //Guy
   function generateRandomSample() {
     // สุ่มข้อมูลชุดใหม่เพื่อให้ผู้ใช้ทดลองได้เร็ว โดยไม่ต้องพิมพ์เอง
     // จำกัดจำนวนสมาชิกให้อยู่ในช่วงที่ยังดู animation ได้ชัดเจน
-    const total = 6 + Math.floor(Math.random() * 5);
-    const numbers = Array.from({ length: total }, () => Math.floor(Math.random() * 90) + 10);
+    const total = 6 + Math.floor(Math.random() * 5);// จำนวนสมาชิกระหว่าง 6-10 เพื่อให้เห็นการเปลี่ยนแปลงชัดเจนในแอนิเมชัน แต่ไม่เยอะจนดูยาก
+    const numbers = Array.from({ length: total }, () => Math.floor(Math.random() * 90) + 10);// สุ่มตัวเลขสองหลักเพื่อให้เห็นความแตกต่างชัดเจนในแอนิเมชัน
     elements.dataInput.value = numbers.join(", ");
     clearPreparedRun();
     state.sourceArray = [...numbers];

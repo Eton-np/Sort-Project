@@ -1,3 +1,4 @@
+//Eton
 (function () {
   // โมดูลนี้รับผิดชอบ "การแสดงผลทั้งหมด" ของหน้า visualizer
   // ไม่ได้คำนวณลอจิกการ sort เอง แต่จะอ่านข้อมูลจาก state และ constants
@@ -26,7 +27,7 @@
     if (phase === "heap-sort") return "Heap Sort";
     return "สถานะปัจจุบัน";
   };
-
+  // ฟังก์ชันหลักที่ใช้สร้าง key สำหรับการแสดงผลของแต่ละ item ในอาร์เรย์
   function getStableVisualKey(item, occurrence) {
     // ถ้าเป็น object จะผูก key ตามตัว object จริง เพื่อให้แม้ตำแหน่งเปลี่ยน
     // DOM node เดิมก็ยังตาม item เดิมได้อย่างเสถียร
@@ -39,7 +40,7 @@
     // เพื่อแยกสมาชิกที่มีค่าเท่ากันไม่ให้ใช้ key ซ้ำกัน
     return `primitive-${String(item)}-${occurrence}`;
   }
-
+  // สร้างรายการข้อมูลที่พร้อมสำหรับ render โดยแนบทั้ง item, index และ key ที่เสถียรเพื่อใช้กับการจัดการ DOM cache
   function buildVisualEntries(array) {
     // สร้างรายการข้อมูลที่พร้อมสำหรับ render
     // โดยแนบทั้ง item, index และ key ที่เสถียรเพื่อใช้กับการจัดการ DOM cache
@@ -50,7 +51,7 @@
       return { item, index, key: getStableVisualKey(item, occurrence) };
     });
   }
-
+  // ฟังก์ชันนี้ใช้วาดชุดตัวเลขในรูปแบบกล่องสั้น ๆ เช่น ใน before array และ after array
   function renderNumberBoxes(container, values, emptyMessage) {
     // ฟังก์ชันกลางสำหรับวาดชุดตัวเลขแบบกล่องสั้น ๆ
     // ใช้กับหลายจุด เช่น before array และ after array
@@ -71,7 +72,7 @@
       container.appendChild(chip);
     });
   }
-
+  // ฟังก์ชันนี้ใช้วาดชุดตัวเลขในรูปแบบกล่องสั้น ๆ เช่น ใน before array และ after array
   function updateAlgorithmGuide() {
     // โหลด metadata ของอัลกอริทึมที่เลือก แล้วสะท้อนลงทุกส่วนของหน้า
     // ทำให้ dropdown, hero และรายละเอียด Big-O สอดคล้องกันเสมอ
@@ -92,14 +93,14 @@
       elements.algorithmHighlights.appendChild(item);
     });
   }
-
+  // ฟังก์ชันนี้อัปเดตตัวนับต่าง ๆ ที่ใช้แสดงประสิทธิภาพและความคืบหน้าของการ sort
   function updateCounters() {
     // สรุปตัวเลขสถานะที่ใช้พรีเซนต์ประสิทธิภาพและความคืบหน้า
     elements.comparisonCount.textContent = String(state.comparisons);
     elements.swapCount.textContent = String(state.swaps);
     elements.roundCount.textContent = String(state.roundsSeen.size);
   }
-
+  // ฟังก์ชันนี้วาดตารางที่บันทึกรายละเอียดของทุก step ที่เกิดขึ้นในระหว่างการ sort
   function renderStepsTable() {
     // ตารางนี้ทำหน้าที่เป็น log แบบละเอียดของทุกเหตุการณ์
     // ผู้ใช้สามารถดูย้อนหลังได้ว่า step ไหนเกิดอะไรขึ้นกับอาร์เรย์
@@ -120,7 +121,8 @@
       elements.stepsTableBody.appendChild(row);
     });
   }
-
+  //Prem
+  // ฟังก์ชันนี้จำลองการ apply operations ทีละตัวเพื่อสร้าง snapshot ของทุกช่วงเวลา
   function buildVisualSnapshots() {
     // จำลองการ apply operations ทีละตัวเพื่อสร้าง snapshot ของทุกช่วงเวลา
     // snapshot เหล่านี้จะถูกใช้ทั้งใน process gallery และ round summary
@@ -145,7 +147,7 @@
 
   if (!window.__barCache) window.__barCache = new Map();
   if (!window.__heapCache) window.__heapCache = new Map();
-
+  // ฟังก์ชันนี้วาดชุดตัวเลขในรูปแบบกล่องเรียงตาม index พร้อมไฮไลต์สถานะต่าง ๆ เช่น active, swapping, sorted และ pivot
   function renderBars(array, active = [], swapping = [], sorted = [], pivot = []) {
     // แสดงข้อมูลหลักในรูป "กล่องตัวเลขเรียงตาม index"
     // ใช้ได้กับหลายอัลกอริทึมและเป็นภาพรวมที่เข้าใจง่ายที่สุดของสถานะปัจจุบัน
@@ -172,7 +174,7 @@
 
     const nodeWidth = 56;
     const gap = 16;
-    const totalWidth = array.length * nodeWidth + (array.length - 1) * gap;
+    const totalWidth = array.length * nodeWidth + (array.length - 1) * gap;// คำนวณความกว้างรวมของกล่องทั้งหมดรวมช่องว่าง เพื่อจัดกึ่งกลางใน container
 
     visualEntries.forEach(({ item, index, key }) => {
       let cell = window.__barCache.get(key);
@@ -216,7 +218,8 @@
       cell.style.top = "40px"; 
     });
   }
-
+  
+  //Guy
   function renderHeapTree() {
     // heap tree เป็น visualization พิเศษสำหรับ Heap Sort
     // ถ้าไม่ได้เลือก heap จะซ่อน section นี้ทันทีเพื่อลดความซับซ้อนบนหน้าจอ
@@ -261,8 +264,8 @@
     });
 
     const n = heapEntries.length;
-    const maxDepth = Math.floor(Math.log2(n || 1));
-    const levelHeight = 100 / (maxDepth + 1.2);
+    const maxDepth = Math.floor(Math.log2(n || 1));// คำนวณความลึกสูงสุดของต้นไม้เพื่อใช้ในการจัดวางโหนดในแนวตั้ง
+    const levelHeight = 100 / (maxDepth + 1.2);// คำนวณความสูงของแต่ละชั้นในต้นไม้เพื่อให้กระจายตัวอย่างสวยงามในพื้นที่ที่กำหนด
     const nodesData = [];
     const linesData = [];
 
@@ -330,7 +333,8 @@
        cell.style.top = node.y + "%";
     });
   }
-
+  //Ice
+  // ฟังก์ชันนี้สร้างภาพย่อของ heap สำหรับใส่ในการ์ด gallery ของแต่ละ step
   function renderRoundSummaryTable() {
     // สรุป "ผลลัพธ์ปลายรอบ" ของแต่ละ pass เพื่อให้ผู้ใช้มองภาพรวมได้เร็ว
     // ต่างจาก steps table ที่เน้นรายละเอียดรายเหตุการณ์
@@ -374,7 +378,7 @@
       tbody.appendChild(tr);
     });
   }
-
+  // ฟังก์ชันนี้สร้างภาพย่อของ heap สำหรับใส่ในการ์ด gallery ของแต่ละ step
   function buildMiniHeapSnapshot(snapshot) {
     // สร้างภาพย่อของ heap สำหรับใส่ในการ์ด gallery ของแต่ละ step
     // เป็นเวอร์ชันเบากว่า heap tree หลัก แต่ยังรักษาแนวคิด parent-child ไว้ครบ
@@ -441,7 +445,7 @@
     });
     return wrapper;
   }
-
+  // ฟังก์ชันนี้สร้างภาพย่อของ heap สำหรับใส่ในการ์ด gallery ของแต่ละ step
   function renderMiniArraySnapshot(snapshot) {
     // ภาพย่อแบบอาร์เรย์สำหรับอัลกอริทึมที่ไม่ต้องใช้โครงสร้างพิเศษ
     // เหมาะกับการดูย้อนหลังใน gallery เพราะใช้พื้นที่น้อยและอ่านเร็ว
@@ -468,7 +472,7 @@
     });
     return wrap;
   }
-
+  //Ball
   function buildQuickBadge(text, tone = "") {
     // badge ขนาดเล็กสำหรับอธิบาย pointer และ pivot ของ Quick Sort
     // ช่วยให้การ์ดแต่ละใบสื่อความหมายได้โดยไม่ต้องอ่านข้อความยาว

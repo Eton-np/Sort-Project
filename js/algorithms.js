@@ -1,3 +1,4 @@
+//Guy
 (function () {
   // โมดูลนี้รวม utility และตัวสร้าง operation ของอัลกอริทึมทุกชนิด
   // แนวคิดหลักของระบบคือไม่ sort แบบแสดงผลทันที แต่จะ "บันทึกเหตุการณ์เป็น operations"
@@ -27,23 +28,23 @@
   function parseToken(part) {
     // แปลงข้อมูลแต่ละช่องจาก input ให้กลายเป็นรูปแบบมาตรฐานของระบบ
     if (LETTER_PATTERN.test(part)) {
-      const normalized = part.toLowerCase();
-      return { value: normalized.charCodeAt(0) - 96, label: normalized };
+      const normalized = part.toLowerCase();// ถ้าเป็นตัวอักษร a-z ให้แปลงเป็นตัวเลข 1-26 เพื่อให้เปรียบเทียบได้ง่าย แต่ยังเก็บ label เดิมไว้แสดงผล
+      return { value: normalized.charCodeAt(0) - 96, label: normalized };// ตัวอย่าง: "a" จะกลายเป็น { value: 1, label: "a" }, "b" เป็น { value: 2, label: "b" } และต่อไปเรื่อย ๆ
     }
-    const numericValue = Number(part);
-    return { value: numericValue, label: part };
+    const numericValue = Number(part);// ถ้าเป็นตัวเลขปกติ ให้แปลงเป็น Number และใช้ทั้ง value และ label เป็นตัวเลขนั้น
+    return { value: numericValue, label: part };// ตัวอย่าง: "5" จะกลายเป็น { value: 5, label: "5" }
   }
 
   function parseInput(inputText) {
     // ตรวจสอบและแปลงข้อความจาก input ให้พร้อมใช้งานจริง
     // ถ้าพบปัญหา จะคืน error message ที่พร้อมแสดงบนหน้าเว็บทันที
-    const raw = inputText.trim();
-    if (!raw) return { error: "กรุณากรอกข้อมูลอย่างน้อย 1 ค่า" };
-    const parts = raw.split(",").map((part) => part.trim());
-    if (parts.some((part) => part === "")) return { error: "พบค่าที่ว่างอยู่ กรุณากรอกข้อมูลให้ครบทุกตำแหน่ง" };
-    const values = parts.map(parseToken);
-    if (values.some((value) => Number.isNaN(getNumericValue(value)))) return { error: "ข้อมูลต้องเป็นตัวเลขหรือ a-z เท่านั้น และต้องคั่นด้วยเครื่องหมายจุลภาค" };
-    if (values.length > 20) return { error: "เพื่อให้ดู animation ชัดเจน กรุณากรอกไม่เกิน 20 ค่า" };
+    const raw = inputText.trim();// ลบช่องว่างส่วนเกินรอบ ๆ ข้อความก่อนตรวจสอบ เพื่อให้ผู้ใช้กรอกข้อมูลได้ยืดหยุ่นขึ้น เช่น " 5, 3, 9 " ก็ยังถือว่า valid ได้
+    if (!raw) return { error: "กรุณากรอกข้อมูลอย่างน้อย 1 ค่า" };// ถ้าไม่มีข้อมูลเลย ให้แจ้งให้ผู้ใช้กรอกข้อมูลก่อน
+    const parts = raw.split(",").map((part) => part.trim());// แยกข้อมูลด้วยเครื่องหมายจุลภาคและลบช่องว่างรอบ ๆ แต่ละส่วน เพื่อให้ผู้ใช้กรอกข้อมูลได้ยืดหยุ่นขึ้น เช่น "5 , 3,9" ก็ยังถือว่า valid ได้
+    if (parts.some((part) => part === "")) return { error: "พบค่าที่ว่างอยู่ กรุณากรอกข้อมูลให้ครบทุกตำแหน่ง" };// ถ้ามีส่วนไหนที่ว่างเปล่า แปลว่าผู้ใช้กรอกข้อมูลไม่ครบ เช่น "5, , 9" จะถือว่าไม่ถูกต้อง
+    const values = parts.map(parseToken);// แปลงแต่ละส่วนให้กลายเป็นรูปแบบ { value, label } ที่ระบบใช้ได้
+    if (values.some((value) => Number.isNaN(getNumericValue(value)))) return { error: "ข้อมูลต้องเป็นตัวเลขหรือ a-z เท่านั้น และต้องคั่นด้วยเครื่องหมายจุลภาค" };// ถ้ามีส่วนไหนที่ไม่สามารถแปลงเป็นตัวเลขหรือ a-z ได้ เช่น "5, x, 9" จะถือว่าไม่ถูกต้อง
+    if (values.length > 20) return { error: "เพื่อให้ดู animation ชัดเจน กรุณากรอกไม่เกิน 20 ค่า" };// ถ้าผู้ใช้กรอกข้อมูลมากเกินไป จะทำให้ animation ดูยากและช้า จึงจำกัดจำนวนข้อมูลที่ 20 ค่า
     return { values };
   }
 
@@ -61,18 +62,23 @@
   function buildTraceRows(sourceArray, operations) {
     // จำลองการทำงานของ operations เพื่อสร้างข้อมูลพร้อมใช้สำหรับตาราง steps
     // ตารางนี้ต้องการข้อความ array ของแต่ละช่วงเวลา จึงต้อง replay เหตุการณ์ตั้งแต่ต้น
-    const rows = [];
+    const rows = [];// ถ้ามีการสร้าง heap แยกจากการ sort จะใช้ array แยกสำหรับแสดงผลในตาราง trace เพื่อให้เห็นความแตกต่างระหว่างช่วง build heap กับ heap sort ได้ชัดเจน
+    // ถ้าไม่มีการสร้าง heap แยก จะใช้การ clone array ปกติที่คอยจำลองสถานะปัจจุบันของข้อมูลระหว่างการ sort ไปเรื่อย ๆ ตามแต่ละ operation
     const isHeapBuild = operations.some((operation) => operation.phase === "build-heap");
+    // ถ้าเป็น heap sort และมีการแยก build heap กับ heap sort ชัดเจน จะใช้ array แยกสำหรับแสดงผลในตาราง trace เพื่อให้เห็นความแตกต่างระหว่างช่วง build heap กับ heap sort ได้ชัดเจน
     const tempArray = isHeapBuild ? [] : cloneArray(sourceArray);
+    // ถ้าเป็น heap sort และมีการแยก build heap กับ heap sort ชัดเจน จะใช้ array แยกสำหรับแสดงผลในตาราง trace เพื่อให้เห็นความแตกต่างระหว่างช่วง build heap กับ heap sort ได้ชัดเจน
     operations.forEach((operation, index) => {
       if (typeof operation.apply === "function") operation.apply(tempArray);
       const visibleArray = operation.displayArray ?? tempArray;
+      // ถ้า operation นี้มี displayArray แสดงว่าอยากให้ใช้ array นี้ในการแสดงผลในตาราง trace แทน tempArray ที่จำลองการทำงานอยู่ 
+      // ซึ่งเหมาะกับกรณีที่ต้องการแสดง array ในรูปแบบพิเศษ เช่น แยก build heap กับ heap sort หรือแสดงสถานะ pointer ของ quick sort ได้ชัดเจนขึ้น
       rows.push({
         step: index + 1,
-        round: operation.round ?? "-",
-        type: getTypeLabel(operation.type),
-        message: operation.message,
-        arrayText: `[${visibleArray.map((value) => (value === null ? "_" : getDisplayValue(value))).join(", ")}]`,
+        round: operation.round ?? "-",// ถ้า operation นี้มีข้อมูลรอบ (round) ให้แสดง ถ้าไม่มีให้แสดง "-"
+        type: getTypeLabel(operation.type),// แปลงรหัสภายในของ operation ให้เป็นข้อความสั้น ๆ สำหรับตาราง trace
+        message: operation.message,// ข้อความอธิบายเหตุการณ์ของ operation นี้
+        arrayText: `[${visibleArray.map((value) => (value === null ? "_" : getDisplayValue(value))).join(", ")}]`,// แปลง array ปัจจุบันให้เป็นข้อความสำหรับแสดงในตาราง trace
       });
     });
     return rows;
@@ -88,6 +94,7 @@
       let minIndex = i;
       for (let j = i + 1; j < arr.length; j += 1) {
         const currentMin = minIndex;
+        // บันทึก operation การเปรียบเทียบแต่ละคู่ เพื่อให้ renderer แสดงภาพการค้นหาค่าน้อยที่สุดในแต่ละรอบได้ชัดเจน
         operations.push(createOperation({ type: "compare", round: i + 1, indices: [currentMin, j], message: `รอบที่ ${i + 1}: เปรียบเทียบ ${getDisplayValue(arr[currentMin])} กับ ${getDisplayValue(arr[j])}` }));
         if (getNumericValue(arr[j]) < getNumericValue(arr[minIndex])) minIndex = j;
       }
@@ -104,7 +111,7 @@
     }
     return { operations, sortedArray: arr };
   }
-
+  //Eton
   // Insertion Sort:
   // เลื่อนค่าที่กำลังพิจารณาไปทางซ้ายจนกว่าจะเจอตำแหน่งที่เหมาะสม
   // เวอร์ชันนี้ใช้ swap ต่อเนื่องแทน overwrite เพื่อให้ animation การเลื่อนกล่องลื่นและดูง่าย
@@ -115,19 +122,20 @@
     for (let i = 1; i < arr.length; i += 1) {
       const round = i;
       let j = i;
-
+      // บันทึก operation การพิจารณาค่าที่กำลังจะเลื่อน เพื่อให้ renderer แสดงภาพการเลือกค่าที่จะเลื่อนในแต่ละรอบได้ชัดเจน
       operations.push(createOperation({
         type: "pivot", round, pivotIndices: [i],
         message: `รอบที่ ${round}: พิจารณาแทรก ${getDisplayValue(arr[i])}`
       }));
 
       let shifted = false;
+      // ใช้ loop เดียวในการเลื่อนค่าที่กำลังพิจารณาไปทางซ้ายจนกว่าจะเจอตำแหน่งที่เหมาะสม
       while (j > 0) {
         operations.push(createOperation({
           type: "compare", round, indices: [j - 1], pivotIndices: [j],
           message: `รอบที่ ${round}: เปรียบเทียบ ${getDisplayValue(arr[j])} กับ ${getDisplayValue(arr[j-1])}`
         }));
-
+        // ถ้าค่าที่อยู่ติดกันทางซ้ายมากกว่าค่าที่กำลังพิจารณา ให้สลับตำแหน่งกันแล้วเลื่อน pointer ไปทางซ้ายต่อ
         if (getNumericValue(arr[j - 1]) > getNumericValue(arr[j])) {
            const leftVal = arr[j-1];
            const rightVal = arr[j];
@@ -160,18 +168,19 @@
     }
     return { operations, sortedArray: arr };
   }
-
+  //
   function buildBubbleOperations(source) {
     // Bubble Sort:
     // เปรียบเทียบค่าที่อยู่ติดกันและสลับเมื่อเรียงผิดลำดับ
     // เวอร์ชันนี้ไล่จากด้านหลังขึ้นด้านหน้าเพื่อให้ค่าน้อยค่อย ๆ ลอยมาทางซ้าย
     const arr = cloneArray(source);
     const operations = [];
-    const sortedSet = new Set();
+    const sortedSet = new Set();// ใช้เก็บตำแหน่งที่เรียงเสร็จแล้วเพื่อให้ renderer แสดงภาพการจัดเรียงที่ค่อย ๆ เพิ่มขึ้นในแต่ละรอบได้ชัดเจน
     let lastRound = 0;
     for (let start = 0, round = 1; start < arr.length - 1; start += 1, round += 1) {
       lastRound = round;
       let swapped = false;
+      // ใช้ loop เดียวในการเปรียบเทียบค่าที่อยู่ติดกันและสลับเมื่อเรียงผิดลำดับ โดยไล่จากด้านหลังขึ้นด้านหน้าเพื่อให้ค่าน้อยค่อย ๆ ลอยมาทางซ้าย
       for (let i = arr.length - 1; i > start; i -= 1) {
         const leftIndex = i - 1;
         const rightIndex = i;
@@ -198,6 +207,7 @@
     return { operations, sortedArray: arr };
   }
 
+  //Ball
   function buildQuickOperations(source) {
     // Quick Sort:
     // ใช้แนวคิด divide and conquer โดยเลือก pivot แล้ว partition ช่วงข้อมูล
@@ -361,6 +371,7 @@
     return { operations, sortedArray: arr };
   }
 
+  //Ice
   // Merge Sort:
   // แนวคิดดั้งเดิมคือแบ่งครึ่งแล้ว merge กลับเข้าด้วยกัน
   // เวอร์ชันนี้ทำการแทรกแบบสลับทีละช่องในอาร์เรย์เดิม เพื่อให้ภาพ animation ต่อเนื่องและไม่มีกล่องหายวูบ
@@ -372,7 +383,7 @@
     function merge(left, mid, right) {
       let start = left;
       let start2 = mid + 1;
-
+      // บันทึก operation การรวมช่วงซ้ายและขวา เพื่อให้ renderer แสดงภาพการรวมช่วงย่อยในแต่ละรอบได้ชัดเจน
       operations.push(createOperation({
           type: "pivot", round,
           pivotIndices: Array.from({ length: right - left + 1 }, (_, offset) => left + offset),
@@ -383,14 +394,14 @@
       if (getNumericValue(arr[mid]) <= getNumericValue(arr[start2])) {
           return;
       }
-
+      // ใช้ loop เดียวในการแทรกค่าจากฝั่งขวาไปยังตำแหน่งที่ถูกต้องในฝั่งซ้ายทีละช่อง โดยไล่จากซ้ายไปขวาเพื่อให้ภาพการเคลื่อนที่ชัดเจน
       while (start <= mid && start2 <= right) {
           operations.push(createOperation({
               type: "compare", round,
               indices: [start], pivotIndices: [start2],
               message: `รอบที่ ${round}: เปรียบเทียบ ${getDisplayValue(arr[start])} กับ ${getDisplayValue(arr[start2])}`
           }));
-
+          // ถ้าค่าที่ฝั่งซ้ายไม่มากกว่าค่าที่ฝั่งขวา แปลว่าตำแหน่งนี้ถูกต้องแล้ว ให้ขยับ pointer ฝั่งซ้ายไปต่อ
           if (getNumericValue(arr[start]) <= getNumericValue(arr[start2])) {
               start++;
           } else {
@@ -442,7 +453,7 @@
     
     return { operations, sortedArray: arr };
   }
-
+  //Prem
   function buildHeapOperations(source) {
     // Heap Sort:
     // ขั้นแรกสร้าง Max Heap จากข้อมูลทั้งหมด
@@ -454,8 +465,9 @@
     function siftDown(heapSize, rootIndex, stageLabel) {
       // siftDown ใช้คืนคุณสมบัติ max heap หลังจาก root ถูกสลับออกไป
       let largest = rootIndex;
-      const left = rootIndex * 2 + 1;
-      const right = rootIndex * 2 + 2;
+      const left = rootIndex * 2 + 1;// ในโครงสร้าง heap ที่เก็บในอาร์เรย์ ลูกซ้ายของโหนดที่ตำแหน่ง i จะอยู่ที่ตำแหน่ง 2*i + 1
+      const right = rootIndex * 2 + 2;// ลูกขวาของโหนดที่ตำแหน่ง i จะอยู่ที่ตำแหน่ง 2*i + 2
+      // บันทึก operation การพิจารณา root และลูกซ้ายขวา เพื่อให้ renderer แสดงภาพการตรวจสอบคุณสมบัติ max heap ในแต่ละรอบได้ชัดเจน
       operations.push(createOperation({ type: "pivot", round, pivotIndices: [rootIndex], message: `${stageLabel}: พิจารณา root ตำแหน่ง ${rootIndex + 1}`, phase: "heap-sort", displayArray: cloneArray(arr) }));
       if (left < heapSize) {
         operations.push(createOperation({ type: "compare", round, indices: [largest, left], message: `${stageLabel}: เปรียบเทียบ root ${getDisplayValue(arr[largest])} กับลูกซ้าย ${getDisplayValue(arr[left])}`, phase: "heap-sort", displayArray: cloneArray(arr) }));
@@ -465,6 +477,7 @@
         operations.push(createOperation({ type: "compare", round, indices: [largest, right], message: `${stageLabel}: เปรียบเทียบค่ามากสุดชั่วคราว ${getDisplayValue(arr[largest])} กับลูกขวา ${getDisplayValue(arr[right])}`, phase: "heap-sort", displayArray: cloneArray(arr) }));
         if (getNumericValue(arr[right]) > getNumericValue(arr[largest])) largest = right;
       }
+      // ถ้าลูกซ้ายหรือขวามีค่ามากกว่า root ให้สลับกับลูกที่มีค่ามากที่สุดแล้ว siftDown ต่อไปเรื่อย ๆ จนกว่าจะคงคุณสมบัติ max heap ได้
       if (largest !== rootIndex) {
         const rootSwapIndex = rootIndex;
         const childSwapIndex = largest;
@@ -478,10 +491,12 @@
 
     // เริ่มจาก heap ว่าง แล้วค่อย insert สมาชิกเข้าไปทีละตัว
     operations.push(createOperation({ type: "pivot", round: 0, message: "เริ่มสร้าง Max Heap จาก heap ว่าง", phase: "build-heap", displayArray: [] }));
+    // การ insert สมาชิกใหม่เข้าไปใน heap จะเหมือนกับการเพิ่มโหนดใหม่เข้าไปในต้นไม้ไบนารีที่สมบูรณ์ แล้วค่อย ๆ ดันค่ามากขึ้นด้านบนจนกว่าจะอยู่ถูกตำแหน่ง
     source.forEach((value, index) => {
       round += 1;
       arr.push(value);
-      const insertedIndex = arr.length - 1;
+      const insertedIndex = arr.length - 1;// โหนดใหม่ที่ถูกเพิ่มเข้าไปจะอยู่ตำแหน่งสุดท้ายของอาร์เรย์ ซึ่งเป็นตำแหน่งที่เหมาะสมสำหรับโหนดใหม่ในต้นไม้ไบนารีที่สมบูรณ์  
+      // บันทึก operation การเพิ่มโหนดใหม่เข้าไปใน heap เพื่อให้ renderer แสดงภาพการเพิ่มโหนดใหม่ในแต่ละรอบได้ชัดเจน
       operations.push(createOperation({
         type: "overwrite",
         round,
@@ -495,7 +510,7 @@
       let currentIndex = insertedIndex;
       while (currentIndex > 0) {
         // เปรียบเทียบกับ parent และดันค่ามากขึ้นด้านบนจนกว่าจะอยู่ถูกตำแหน่ง
-        const parentIndex = Math.floor((currentIndex - 1) / 2);
+        const parentIndex = Math.floor((currentIndex - 1) / 2);// ในโครงสร้าง heap ที่เก็บในอาร์เรย์ โหนดที่ตำแหน่ง i จะมี parent อยู่ที่ตำแหน่ง Math.floor((i - 1) / 2)
         operations.push(createOperation({
           type: "compare",
           round,
@@ -504,12 +519,14 @@
           phase: "build-heap",
           displayArray: cloneArray(arr),
         }));
+        // ถ้าพ่อมีค่ามากกว่าหรือเท่ากับลูก แปลว่าค่าที่เพิ่มเข้ามาอยู่ในตำแหน่งที่ถูกต้องแล้ว ไม่ต้องดันขึ้นไปอีก
         if (getNumericValue(arr[parentIndex]) >= getNumericValue(arr[currentIndex])) break;
         const parentValue = arr[parentIndex];
         const childValue = arr[currentIndex];
         [arr[parentIndex], arr[currentIndex]] = [arr[currentIndex], arr[parentIndex]];
         const swapParentIndex = parentIndex;
         const swapChildIndex = currentIndex;
+        // บันทึก operation การสลับกับ parent เพื่อให้ renderer แสดงภาพการดันค่ามากขึ้นด้านบนในแต่ละรอบได้ชัดเจน
         operations.push(createOperation({
           type: "swap",
           round,
@@ -551,7 +568,7 @@
     operations.push(createOperation({ type: "markSorted", round, sortedIndices: [...sortedSet], message: "Heap Sort เสร็จสมบูรณ์ ข้อมูลเรียงครบแล้ว", phase: "heap-sort", displayArray: cloneArray(arr) }));
     return { operations, sortedArray: arr };
   }
-
+  //Ice
   function generateOperations(array, algorithm) {
     // dispatcher กลางสำหรับเลือกตัวสร้าง operations ให้ตรงกับอัลกอริทึมที่ผู้ใช้เลือก
     switch (algorithm) {

@@ -1,5 +1,6 @@
+//Prem
 (function () {
-  // ดึง reference ของ DOM element ที่ต้องใช้บ่อยมาเก็บรวมกันไว้ใน object เดียว
+  // ดึง reference ของ Document Object Model element ที่ต้องใช้บ่อยมาเก็บรวมกันไว้ใน object เดียว
   // แนวทางนี้ช่วยลดการ query ซ้ำหลายรอบ ทำให้โค้ดส่วน controller / renderer อ่านง่ายขึ้น
   // และยังทำหน้าที่เป็นเหมือน "แผนที่ของหน้าเว็บ" ว่าระบบควบคุม element ไหนอยู่บ้าง
   const app = (window.SortingApp = window.SortingApp || {});
