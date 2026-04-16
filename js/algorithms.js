@@ -1,16 +1,31 @@
 (function () {
+  // โมดูลนี้รวม utility และตัวสร้าง operation ของอัลกอริทึมทุกชนิด
+  // แนวคิดหลักของระบบคือไม่ sort แบบแสดงผลทันที แต่จะ "บันทึกเหตุการณ์เป็น operations"
+  // แล้วให้ controller/renderer เล่น operations เหล่านั้นอีกทีเพื่อทำ animation และอธิบายแต่ละ step
   const app = (window.SortingApp = window.SortingApp || {});
 
+  // clone แบบตื้นสำหรับอาร์เรย์ ใช้บ่อยเวลาอยากคัดลอกสถานะปัจจุบันไปทำงานต่อ
   const cloneArray = (array) => array.slice();
+
+  // ใช้ตรวจว่าผู้ใช้กรอกตัวอักษรเดี่ยว a-z หรือไม่
   const LETTER_PATTERN = /^[a-z]$/i;
+
+  // ข้อมูลบางตัวถูกเก็บเป็น object { value, label } เพื่อแยก "ค่าที่ใช้เปรียบเทียบ" กับ "ข้อความที่แสดง"
   const isValueItem = (value) => typeof value === "object" && value !== null && "value" in value;
+
+  // คืนค่าตัวเลขจริงสำหรับใช้เปรียบเทียบในอัลกอริทึม
   const getNumericValue = (value) => (isValueItem(value) ? value.value : value);
   const getDisplayValue = (value) => {
+
+    // null ใช้เป็นค่าพิเศษในบางภาพแสดงผล จึงส่ง null กลับไปตรง ๆ
     if (value === null) return null;
+    
+    // ถ้าเป็น object ให้ใช้ label เพื่อให้แสดง a, b, c หรือข้อความเดิมที่ผู้ใช้กรอก
     return isValueItem(value) ? value.label : String(value);
   };
 
   function parseToken(part) {
+    // แปลงข้อมูลแต่ละช่องจาก input ให้กลายเป็นรูปแบบมาตรฐานของระบบ
     if (LETTER_PATTERN.test(part)) {
       const normalized = part.toLowerCase();
       return { value: normalized.charCodeAt(0) - 96, label: normalized };
@@ -20,6 +35,8 @@
   }
 
   function parseInput(inputText) {
+    // ตรวจสอบและแปลงข้อความจาก input ให้พร้อมใช้งานจริง
+    // ถ้าพบปัญหา จะคืน error message ที่พร้อมแสดงบนหน้าเว็บทันที
     const raw = inputText.trim();
     if (!raw) return { error: "กรุณากรอกข้อมูลอย่างน้อย 1 ค่า" };
     const parts = raw.split(",").map((part) => part.trim());
@@ -31,14 +48,19 @@
   }
 
   function createOperation({ type, message, round = null, indices = [], swapIndices = [], sortedIndices = [], pivotIndices = [], apply = null, phase = "sort", displayArray = null, quick = null }) {
+    // สร้าง object มาตรฐานของหนึ่ง step
+    // โครงสร้างนี้ถูกใช้ร่วมกันทุกอัลกอริทึมเพื่อให้ renderer อ่านข้อมูลได้รูปแบบเดียว
     return { type, message, round, indices, swapIndices, sortedIndices, pivotIndices, apply, phase, displayArray, quick };
   }
 
   function getTypeLabel(type) {
+    // แปลงรหัสภายในของ operation ให้เป็นข้อความสั้น ๆ สำหรับตาราง trace
     return { compare: "Compare", swap: "Swap", overwrite: "Overwrite", pivot: "Focus", markSorted: "Sorted", note: "Note" }[type] ?? type;
   }
 
   function buildTraceRows(sourceArray, operations) {
+    // จำลองการทำงานของ operations เพื่อสร้างข้อมูลพร้อมใช้สำหรับตาราง steps
+    // ตารางนี้ต้องการข้อความ array ของแต่ละช่วงเวลา จึงต้อง replay เหตุการณ์ตั้งแต่ต้น
     const rows = [];
     const isHeapBuild = operations.some((operation) => operation.phase === "build-heap");
     const tempArray = isHeapBuild ? [] : cloneArray(sourceArray);
@@ -57,6 +79,8 @@
   }
 
   function buildSelectionOperations(source) {
+    // Selection Sort:
+    // แต่ละรอบหา "ค่าน้อยที่สุด" ในช่วงที่ยังไม่เรียง แล้วสลับมาไว้ด้านหน้า
     const arr = cloneArray(source);
     const operations = [];
     const sortedSet = new Set();
@@ -81,7 +105,9 @@
     return { operations, sortedArray: arr };
   }
 
-  // อัปเกรด: แก้จากเขียนทับ (Overwrite) มาใช้ สลับ (Swap) เพื่อป้องกันกล่องวาบหาย
+  // Insertion Sort:
+  // เลื่อนค่าที่กำลังพิจารณาไปทางซ้ายจนกว่าจะเจอตำแหน่งที่เหมาะสม
+  // เวอร์ชันนี้ใช้ swap ต่อเนื่องแทน overwrite เพื่อให้ animation การเลื่อนกล่องลื่นและดูง่าย
   function buildInsertionOperations(source) {
     const arr = cloneArray(source);
     const operations = [];
@@ -136,6 +162,9 @@
   }
 
   function buildBubbleOperations(source) {
+    // Bubble Sort:
+    // เปรียบเทียบค่าที่อยู่ติดกันและสลับเมื่อเรียงผิดลำดับ
+    // เวอร์ชันนี้ไล่จากด้านหลังขึ้นด้านหน้าเพื่อให้ค่าน้อยค่อย ๆ ลอยมาทางซ้าย
     const arr = cloneArray(source);
     const operations = [];
     const sortedSet = new Set();
@@ -170,13 +199,18 @@
   }
 
   function buildQuickOperations(source) {
+    // Quick Sort:
+    // ใช้แนวคิด divide and conquer โดยเลือก pivot แล้ว partition ช่วงข้อมูล
+    // ไฟล์นี้ยังบันทึกข้อมูล pointer L/R และ pivot เพิ่มเข้าไป เพื่อให้ renderer วาดภาพอธิบายได้ละเอียด
     const arr = cloneArray(source);
     const operations = [];
     const sortedSet = new Set();
     let round = 0;
     function quickSort(low, high) {
+      // กรณีช่วงว่าง ไม่มีอะไรต้องทำ
       if (low > high) return;
       if (low === high) {
+        // ถ้าเหลือสมาชิกเดียว ให้ถือว่าเรียงแล้วทันที
         sortedSet.add(low);
         operations.push(createOperation({
           type: "markSorted",
@@ -199,6 +233,7 @@
       let leftPointer = low;
       let rightPointer = high - 1;
       while (leftPointer <= rightPointer) {
+        // สแกนจากฝั่งซ้ายเพื่อหาค่าที่ "มากกว่า pivot"
         operations.push(createOperation({
           type: "compare",
           round,
@@ -231,6 +266,7 @@
           }
         }
         if (leftPointer > rightPointer) break;
+        // สแกนจากฝั่งขวาเพื่อหาค่าที่ "น้อยกว่าหรือเท่ากับ pivot"
         operations.push(createOperation({
           type: "compare",
           round,
@@ -253,6 +289,7 @@
           }
         }
         if (leftPointer > rightPointer) break;
+        // เมื่อ L และ R พบค่าที่อยู่ผิดฝั่ง จะสลับกัน
         const leftValue = arr[leftPointer];
         const rightValue = arr[rightPointer];
         [arr[leftPointer], arr[rightPointer]] = [arr[rightPointer], arr[leftPointer]];
@@ -270,6 +307,7 @@
         leftPointer += 1;
         rightPointer -= 1;
       }
+      // เมื่อ pointer ไขว้กันแล้ว ตำแหน่งของ L คือจุดที่ pivot ควรถูกวางลง
       operations.push(createOperation({
         type: "note",
         round,
@@ -307,6 +345,8 @@
         message: `รอบที่ ${round}: ตั้ง Sentinel ตัวใหม่กับช่วงซ้ายและขวาของ pivot แล้วทำซ้ำ`,
         quick: { low, high, leftPointer: pivotIndex, rightPointer, pivotIndex, crossed: true },
       }));
+
+      // เรียกซ้ำกับฝั่งซ้ายและขวาของ pivot
       quickSort(low, pivotIndex - 1);
       quickSort(pivotIndex + 1, high);
     }
@@ -321,7 +361,9 @@
     return { operations, sortedArray: arr };
   }
 
-  // อัปเกรด: In-Place Merge Sort แบบ "สไลด์สลับ" แก้ปัญหากล่องวาบหายไป 100%
+  // Merge Sort:
+  // แนวคิดดั้งเดิมคือแบ่งครึ่งแล้ว merge กลับเข้าด้วยกัน
+  // เวอร์ชันนี้ทำการแทรกแบบสลับทีละช่องในอาร์เรย์เดิม เพื่อให้ภาพ animation ต่อเนื่องและไม่มีกล่องหายวูบ
   function buildMergeOperations(source) {
     const arr = cloneArray(source);
     const operations = [];
@@ -337,6 +379,7 @@
           message: `รอบที่ ${round}: รวมช่วงซ้ายและขวา`
       }));
 
+      // ถ้าช่วงทั้งสองเรียงต่อกันอยู่แล้ว ไม่ต้อง merge เพิ่ม
       if (getNumericValue(arr[mid]) <= getNumericValue(arr[start2])) {
           return;
       }
@@ -353,8 +396,8 @@
           } else {
               let index = start2;
 
-              // สลับ(Swap) ทีละช่องย้อนกลับไปจนถึงตำแหน่ง start 
-              // วิธีนี้จะทำให้กล่องเลื่อนไหลสลับที่กัน ไม่มีตัวไหนโดนเขียนทับหายไป
+              // เลื่อนสมาชิกจากฝั่งขวามาแทรกในตำแหน่งที่ถูกต้อง
+              // ทำผ่านการ swap ย้อนทีละช่อง เพื่อให้ภาพการเคลื่อนที่ชัดเจนบนหน้าเว็บ
               while (index !== start) {
                   const swapLeft = index - 1;
                   const swapRight = index;
@@ -381,6 +424,7 @@
     }
 
     function mergeSort(left, right) {
+      // เรียกแบ่งครึ่งซ้ำจนย่อยที่สุด แล้วค่อย merge กลับขึ้นมา
       if (left >= right) return;
       const mid = Math.floor((left + right) / 2);
       mergeSort(left, mid);
@@ -400,11 +444,15 @@
   }
 
   function buildHeapOperations(source) {
+    // Heap Sort:
+    // ขั้นแรกสร้าง Max Heap จากข้อมูลทั้งหมด
+    // ขั้นถัดไปสลับราก heap ไปไว้ท้ายช่วง แล้วปรับ heap ที่เหลือซ้ำ
     const arr = [];
     const operations = [];
     const sortedSet = new Set();
     let round = 0;
     function siftDown(heapSize, rootIndex, stageLabel) {
+      // siftDown ใช้คืนคุณสมบัติ max heap หลังจาก root ถูกสลับออกไป
       let largest = rootIndex;
       const left = rootIndex * 2 + 1;
       const right = rootIndex * 2 + 2;
@@ -427,6 +475,8 @@
         siftDown(heapSize, largest, stageLabel);
       }
     }
+
+    // เริ่มจาก heap ว่าง แล้วค่อย insert สมาชิกเข้าไปทีละตัว
     operations.push(createOperation({ type: "pivot", round: 0, message: "เริ่มสร้าง Max Heap จาก heap ว่าง", phase: "build-heap", displayArray: [] }));
     source.forEach((value, index) => {
       round += 1;
@@ -444,6 +494,7 @@
       }));
       let currentIndex = insertedIndex;
       while (currentIndex > 0) {
+        // เปรียบเทียบกับ parent และดันค่ามากขึ้นด้านบนจนกว่าจะอยู่ถูกตำแหน่ง
         const parentIndex = Math.floor((currentIndex - 1) / 2);
         operations.push(createOperation({
           type: "compare",
@@ -480,6 +531,8 @@
       }));
     });
     operations.push(createOperation({ type: "note", round: Math.max(round, 1), message: "สร้าง Max Heap เสร็จสมบูรณ์ พร้อมเริ่มขั้นตอน Heap Sort", phase: "build-heap", displayArray: cloneArray(arr) }));
+
+    // เมื่อสร้าง heap เสร็จแล้ว จะนำค่าสูงสุดที่ root ไปวางท้ายช่วงทีละรอบ
     for (let end = arr.length - 1; end > 0; end -= 1) {
       round += 1;
       const rootIndex = 0;
@@ -500,6 +553,7 @@
   }
 
   function generateOperations(array, algorithm) {
+    // dispatcher กลางสำหรับเลือกตัวสร้าง operations ให้ตรงกับอัลกอริทึมที่ผู้ใช้เลือก
     switch (algorithm) {
       case "selection": return buildSelectionOperations(array);
       case "insertion": return buildInsertionOperations(array);
@@ -511,5 +565,6 @@
     }
   }
 
+  // export ฟังก์ชันที่ไฟล์อื่นต้องใช้ผ่าน namespace กลาง
   app.algorithms = { cloneArray, parseInput, createOperation, getTypeLabel, buildTraceRows, generateOperations, getDisplayValue, getNumericValue };
 })();
