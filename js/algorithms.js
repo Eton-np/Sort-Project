@@ -118,6 +118,8 @@
   function buildInsertionOperations(source) {
     const arr = cloneArray(source);
     const operations = [];
+    const sortedSet = new Set();
+    if (arr.length) sortedSet.add(0);
     
     for (let i = 1; i < arr.length; i += 1) {
       const round = i;
@@ -132,21 +134,23 @@
       // ใช้ loop เดียวในการเลื่อนค่าที่กำลังพิจารณาไปทางซ้ายจนกว่าจะเจอตำแหน่งที่เหมาะสม
       while (j > 0) {
         operations.push(createOperation({
-          type: "compare", round, indices: [j - 1], pivotIndices: [j],
+          type: "compare", round, indices: [j - 1, j], pivotIndices: [j],
           message: `รอบที่ ${round}: เปรียบเทียบ ${getDisplayValue(arr[j])} กับ ${getDisplayValue(arr[j-1])}`
         }));
         // ถ้าค่าที่อยู่ติดกันทางซ้ายมากกว่าค่าที่กำลังพิจารณา ให้สลับตำแหน่งกันแล้วเลื่อน pointer ไปทางซ้ายต่อ
         if (getNumericValue(arr[j - 1]) > getNumericValue(arr[j])) {
-           const leftVal = arr[j-1];
-           const rightVal = arr[j];
+           const leftIndex = j - 1;
+           const rightIndex = j;
+           const leftVal = arr[leftIndex];
+           const rightVal = arr[rightIndex];
            operations.push(createOperation({
-              type: "swap", round, swapIndices: [j - 1, j],
+              type: "swap", round, swapIndices: [leftIndex, rightIndex],
               message: `รอบที่ ${round}: สลับ ${getDisplayValue(rightVal)} มาทางซ้าย`,
               apply(target) {
-                  [target[j-1], target[j]] = [target[j], target[j-1]];
+                  [target[leftIndex], target[rightIndex]] = [target[rightIndex], target[leftIndex]];
               }
            }));
-           [arr[j-1], arr[j]] = [arr[j], arr[j-1]];
+           [arr[leftIndex], arr[rightIndex]] = [arr[rightIndex], arr[leftIndex]];
            shifted = true;
            j -= 1;
         } else {
@@ -156,6 +160,13 @@
       operations.push(createOperation({
         type: "note", round,
         message: shifted ? `รอบที่ ${round}: แทรกเข้าตำแหน่งเรียบร้อย` : `รอบที่ ${round}: ข้อมูลอยู่ในตำแหน่งที่ถูกต้องแล้ว`
+      }));
+      for (let sortedIndex = 0; sortedIndex <= i; sortedIndex += 1) sortedSet.add(sortedIndex);
+      operations.push(createOperation({
+        type: "markSorted",
+        round,
+        sortedIndices: [...sortedSet],
+        message: `จบรอบที่ ${round}: ช่วงด้านหน้าถึงตำแหน่งที่ ${i + 1} เรียงถูกต้องแล้ว`
       }));
     }
     
